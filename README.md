@@ -72,10 +72,6 @@ This keeps the user in control of the Git history while leveraging the AI for co
 ## Files to Copy into Your Project Root
 
 *   `.cursor/` (containing the `templates/` and `double_agent_system/` subdirectories with their contents, including `setup_instructions.md` and `project_interview.template.md`)
-*   `TROUBLESHOOTING.md`
-*   `README.md` (this file)
-
-*(Remember to create `project_interview.md` in the root based on the template)*
 
 ## File Descriptions
 
