@@ -1,0 +1,15 @@
+# Double-Agent System v3 Status and Configuration
+# Initial scan performed: [Timestamp will be added by setup]
+# User validation completed: [Timestamp will be added by setup]
+
+initialSetupComplete: false
+userValidationComplete: false
+verboseLoggingEnabled: false # Controls detail level in learnings.log (Maybe implement later)
+
+# Self-Review Configuration (Requires Git)
+# Off: No self-review performed.
+# Basic: Agent reviews changes, reports score/issues/suggestions, then stops (awaits user).
+# Full: Agent reviews, reports, proposes applying fixes, and awaits user confirmation (Yes/No) to proceed.
+selfReviewLevel: Off
+
+# Add other double-config as needed

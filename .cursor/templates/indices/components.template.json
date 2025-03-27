@@ -1,0 +1,14 @@
+[]
+// Example Entry (Agent would add entries like this to the array above):
+// [
+//   {
+//     "id": "comp-button-primary-0a3f", // Unique ID (e.g., type-name-hash)
+//     "path": "@src/components/ui/Button.tsx",
+//     "entityName": "Button", // Component name
+//     "description": "Standard UI button component with variants (primary, secondary, destructive).",
+//     "props": ["variant", "size", "onClick", "children"], // Optional: Key props
+//     "usageNotes": "Import from '@src/components/ui/Button'. Use 'variant' prop for style.",
+//     "lastVerified": "2023-10-27T12:00:00Z", // Timestamp of last successful check/use
+//     "confidence": 0.9 // Score 0.0-1.0 reflecting verification status
+//   }
+// ]

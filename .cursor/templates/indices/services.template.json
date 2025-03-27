@@ -1,0 +1,14 @@
+[]
+// Example Entry:
+// [
+//   {
+//     "id": "svc-user-client-f5e1",
+//     "path": "@src/services/apiClient.ts", // Or maybe a specific user service file
+//     "entityName": "fetchUserProfile", // Could be class name or specific function
+//     "description": "Handles fetching user profile data from the backend API.",
+//     "methods": ["fetchUserProfile(userId)", "updateUserProfile(userId, data)"], // Optional: Key methods
+//     "usageNotes": "Instantiate API client first if needed. Handles auth tokens automatically.",
+//     "lastVerified": "2023-10-27T12:00:00Z",
+//     "confidence": 0.8
+//   }
+// ]

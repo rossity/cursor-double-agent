@@ -1,0 +1,14 @@
+[]
+// Example Entry:
+// [
+//  {
+//    "id": "util-date-format-iso-b1c8",
+//    "path": "@src/utils/dateUtils.ts",
+//    "entityName": "formatDateToISO",
+//    "description": "Formats a Date object or timestamp string into ISO 8601 format.",
+//    "signature": "function formatDateToISO(date: Date | string | number): string", // Optional
+//    "usageNotes": "Use for standardizing dates for API calls.",
+//    "lastVerified": "2023-10-27T12:00:00Z",
+//    "confidence": 1.0
+//  }
+// ]
