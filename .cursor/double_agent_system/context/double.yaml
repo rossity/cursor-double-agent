@@ -1,0 +1,15 @@
+# Double-Agent System Status and Configuration
+# Initial scan performed: [Timestamp will be added by setup]
+# User validation completed: [Timestamp will be added by setup]
+
+initialSetupComplete: false
+userValidationComplete: false
+verboseLoggingEnabled: false # Future use: Controls detail level in learnings.log
+
+# Self-Review Configuration (Requires Git)
+# Off: No self-review performed.
+# Basic: Agent reviews uncommitted changes (git diff HEAD), reports score/issues/suggestions, then stops (awaits user).
+# Full: Agent reviews, reports, proposes applying suggested fixes, and awaits user confirmation (Yes/No) to proceed with *applying fixes only*. User still handles commit.
+selfReviewLevel: Off
+
+# Add other double-config as needed

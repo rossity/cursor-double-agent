@@ -24,4 +24,4 @@ Status Markers: `[ ]`=Planned, `[In Progress]`=In Progress, `[X]`=Completed, `[B
 
 ## 4. Key Decisions / Notes:
 *   [Agent or User can add notes on major decisions, e.g., Tech stack choices, architectural agreements]
-*   [Timestamp] Roadmap draft generated/seeded. Awaiting user review/refinement.
+*   [Timestamp] Roadmap draft generated/seeded from interview. Awaiting user review/refinement.

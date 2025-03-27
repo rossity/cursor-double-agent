@@ -1,90 +1,118 @@
-# Double-Agent System v3 for Cursor
+# Double-Agent System for Cursor
 
-This repository contains the configuration files and setup instructions to implement the "Double-Agent System" within the Cursor IDE. This system enhances the AI agent's capabilities by providing structured, persistent context, robust task management, high-level planning, self-correction routines, and an optional Git-based self-review mechanism. It aims to mitigate issues like context loss, redundancy, and lack of strategic planning in complex projects.
+[![Version](https://img.shields.io/badge/Version-3.1-blue)](https://github.com/rossity/cursor-double-agent) <!-- Optional: Add your repo link -->
 
-**Problems Addressed:**
+Welcome to the Double-Agent System for the Cursor IDE! This system enhances Cursor's AI capabilities by providing a structured framework for managing context, planning tasks, and ensuring code quality, especially within complex or long-running projects.
 
-*   **Context Scalability:** Handles large projects better using structured context files (`context/`) and JSON indices (`indices/`) instead of one monolithic file.
-*   **Contextual Drift:** Reduces forgetting instructions via a state-machine-like approach (`core_ai_rules.md`) and focused context loading.
-*   **Task Planning:** Assists in breaking down goals via `ai_task_manager.md`.
-*   **Project Planning:** Enables tracking high-level roadmap via `ai_project_roadmap.md`.
-*   **Code Quality & Consistency:** Introduces an optional **Self-Review** mechanism where the agent uses `git diff` to review its own changes against project standards before finalizing.
-*   **Adaptability:** Designed for new and existing projects via scanning and a structured user interview conducted *before* setup.
+## What it Does
 
-**Key v3 Improvements:**
+The Double-Agent System aims to make the AI a more reliable coding partner by:
 
-*   **Structured Context:** `ai_context.md` is replaced by specific files in `.cursor/ai_double_system/context/` (architecture, patterns, etc.) and `.cursor/ai_double_system/indices/` (JSON files for components, utils, etc.). This improves retrieval speed and reliability.
-*   **YAML Task Manager:** `ai_task_manager.md` uses YAML frontmatter for better state tracking and structure.
-*   **State Machine Rules:** `core_ai_rules.md` is structured more like a state machine for clearer agent operation.
-*   **Optional Self-Review:** A new feature controlled via `.cursor/ai_double_system/context/double.yaml`. Can be `Off`, `Basic` (review + report), or `Full` (review + report + propose fixes + await confirmation). Requires Git.
-*   **Pre-Setup Interview:** User provides high-level context via `project_interview.md` *before* the AI setup process begins.
+*   **Maintaining Context:** Reduces the AI forgetting instructions or project details by using dedicated context files (`context/`) and structured indices (`indices/`) instead of relying solely on chat history or monolithic context blobs.
+*   **Structured Planning:** Facilitates breaking down complex goals into manageable steps using a dedicated task manager (`ai_task_manager.md`) and tracking the overall project direction with a roadmap (`ai_project_roadmap.md`).
+*   **Procedural Operation:** Guides the AI through a defined state machine (`core_ai_rules.md`) for tasks: Planning -> Checking -> Executing -> Verifying -> Reviewing -> Updating Context.
+*   **Integrated Self-Review (Optional):** Allows the AI to review its own *uncommitted* changes using `git diff` against project standards and context before finalizing its work. This promotes code quality and consistency.
+*   **Adaptability:** Designed to be set up in both new and existing projects through an initial user interview and project scan.
 
-**How to Use (Setup Process):**
+## Requirements
+
+*   **Cursor IDE:** This system is designed specifically for the Cursor environment.
+*   **Git:** Git must be installed and the target project must be a Git repository (`git init` if needed). `git status` and `git diff` must work correctly from the terminal. The Self-Review feature heavily relies on Git.
+*   **Basic Terminal Tools:** Standard Unix/Linux tools like `mkdir`, `cp`, `echo`, `grep`, `find` should be available in the Cursor terminal environment.
+*   **(Optional but Recommended) Universal Ctags:** For better code scanning during setup and context refreshing (`brew install universal-ctags` or equivalent).
+
+## How to Install and Setup
+
+Follow these steps carefully:
 
 1.  **Prepare Project & Interview:**
-    *   Ensure your project is a Git repository (`git init` if needed, `git status` should work).
-    *   Copy the files from this distribution (listed below) into the **root directory** of your target project.
-    *   **Manually create `project_interview.md`:** Use `project_interview.template.md` as a guide. Create a file named `project_interview.md` in your project root and fill it out thoroughly with details about your project. **Save this file.**
+    *   Ensure your project is a Git repository and you have no uncommitted changes you want to keep separate from the setup.
+    *   Copy the required files/folders from this distribution into the **root directory** of your target project (see "Files to Copy" below).
+    *   **Fill out the Interview:**
+        *   Locate the template at `.cursor/double_agent_system/project_interview.md` and fill it out thoroughly with details about *your* project.
+        *   **Save the file.** This file is crucial for the setup process.
 
 2.  **Run Setup Script via AI:**
-    *   Open your project in the Cursor IDE.
-    *   Open the file `setup_instructions.md` within Cursor.
-    *   Select and copy the **entire content** of `setup_instructions.md`.
+    *   Open the file `@.cursor/double_agent_system/setup_instructions.md` within Cursor.
+    *   Select and copy the **entire content** of this file.
     *   Paste the copied content directly into the Cursor AI chat panel and press Enter/Send.
 
 3.  **Follow AI Instructions:**
-    *   The AI agent will execute the setup script, which now *reads* your pre-filled `project_interview.md`. Follow its prompts carefully:
+    *   The AI agent will execute the setup script. It will read your pre-filled `project_interview.md` from the root directory. Follow its prompts carefully:
         *   **Wait:** Allow time for directory/file creation and initial scan.
-        *   **Add User Rule:** Manually add the **exact** User Rule text provided by the agent into Cursor Settings -> Agent -> User Rules. Confirm addition.
-        *   **Validate Context & Roadmap:** Review the generated files in `@.cursor/ai_double_system/context/`, `@.cursor/ai_double_system/indices/`, and `@.cursor/ai_double_system/ai_project_roadmap.md`. Correct inaccuracies based on the scan and your interview input. Confirm validation.
+        *   **Add User Rule:** Manually add the **exact** User Rule text provided by the agent into Cursor Settings -> Agent -> User Rules. Confirm when done. This rule tells Cursor to use the system.
+        *   **Validate Context & Roadmap:** Review the generated files in `@.cursor/double_agent_system/context/`, `@.cursor/double_agent_system/indices/`, and `@.cursor/double_agent_system/ai_project_roadmap.md`. Correct any inaccuracies based on the scan and your interview input. Add initial entries to index files (`indices/*.json`) if you know key components. Confirm validation when done.
 
-4.  **Setup Complete:** The Double-Agent System v3 is active.
+4.  **Setup Complete:** The Double-Agent System is active. The AI will now operate according to the defined rules.
 
-**Starting Development:**
+## How to Use
 
-*   Use standard prompts. The agent should follow the procedures in `@.cursor/rules/core_ai_rules.md`.
-*   To generate/regenerate the roadmap: `Generate Project Roadmap: [Describe vision]`.
-*   To control self-review: `AI: Set self-review level to Off | Basic | Full`.
-*   To manually trigger review: `AI: Review last changes`.
+*   **Standard Prompts:** Start development tasks as usual (e.g., "Implement user login using JWT"). The agent should automatically follow the procedures defined in `@.cursor/rules/core_ai_rules.md`.
+*   **Generate/Regenerate Roadmap:** `AI: Generate Project Roadmap: [Describe project vision and key goals]`
+*   **Control Self-Review:**
+    *   `AI: Set self-review level to Off`
+    *   `AI: Set self-review level to Basic` (Review + Report)
+    *   `AI: Set self-review level to Full` (Review + Report + Propose Fixes + Await Confirmation)
+*   **Manually Trigger Review:** `AI: Review last changes` (Reviews current uncommitted changes)
+*   **Check Status:** `AI: Report Double-Agent status`
 
-**Files to Copy into Your Project Root:**
+## Git Workflow Recommendation
 
-*   `.cursor/` (containing the `templates/` subdirectory)
-*   `project_interview.template.md` (Use this as a guide to create `project_interview.md`)
-*   `setup_instructions.md`
+This system integrates with Git for self-review, but **it does not automate branching or committing.** We recommend the following workflow for best results:
+
+1.  **User: Create Branch:** Before starting a new feature or significant task, create and check out a new branch (e.g., `git checkout -b feat/new-login-flow`).
+2.  **User: Instruct AI:** Give the AI the task.
+3.  **AI: Executes Task:** The AI works on the task within the current branch, using the Double-Agent state machine (Plan -> Pre-check -> Execute -> Post-check -> Self-Review -> Update). Self-review (`git diff HEAD`) checks the AI's *uncommitted* work on this branch.
+4.  **User: Reviews AI Work:** Once the AI indicates the task step (or whole task) is complete, review the changes (`git diff`, visually inspect).
+5.  **User: Commits Changes:** If satisfied, stage (`git add .`) and commit the changes with a meaningful message (`git commit -m "feat: Implement initial login form"`).
+6.  **User: Manages PRs/Merges:** Handle pull requests and merges as per your team's standard process.
+
+This keeps the user in control of the Git history while leveraging the AI for code generation and review within a specific task context.
+
+## Files to Copy into Your Project Root
+
+*   `.cursor/` (containing the `templates/` and `double_agent_system/` subdirectories with their contents, including `setup_instructions.md` and `project_interview.template.md`)
 *   `TROUBLESHOOTING.md`
 *   `README.md` (this file)
 
-**File Descriptions:**
+*(Remember to create `project_interview.md` in the root based on the template)*
 
-*   `setup_instructions.md`: AI script to automate setup (reads pre-filled `project_interview.md`).
-*   `project_interview.template.md`: Reference template for the user to create `project_interview.md` *before* setup.
+## File Descriptions
+
+*   `.cursor/double_agent_system/setup_instructions.md`: AI script to automate setup (reads `project_interview.md` from root).
+*   `.cursor/double_agent_system/project_interview.template.md`: Template for the user interview file (`project_interview.md`).
 *   `.cursor/templates/`: Base templates used during setup.
-    *   `core_ai_rules.template.md`: Core agent logic (v3).
-    *   `context/`: Templates for structured context files.
-    *   `indices/`: Templates for JSON indices (contain commented examples for reference).
+    *   `core_ai_rules.template.md`: Core agent logic state machine.
+    *   `context/`: Templates for structured context files (`architecture.md`, `patterns.md`, etc.).
+    *   `indices/`: Templates for JSON indices (`components.json`, etc. - contain examples).
     *   `ai_project_roadmap.template.md`, `ai_task_manager.template.md`
-*   `.cursor/ai_double_system/` (Created by setup)`: Active state files (context/, indices/, roadmap, task manager). JSON files in `indices/` are initialized as `[]`.
-*   `.cursor/rules/` (Created by setup)`: Contains `core_ai_rules.md`.
-*   `TROUBLESHOOTING.md`: Help guide (v3).
+*   `.cursor/double_agent_system/` (Created by setup): Active state files.
+    *   `context/`: Holds current project context (`architecture.md`, `patterns.md`, `double.yaml`, `learnings.log`, etc.).
+    *   `indices/`: Holds JSON arrays of project elements (`components.json`, `utils.json`, etc.).
+    *   `ai_project_roadmap.md`: High-level project plan.
+    *   `ai_task_manager.md`: Tracks the AI's current task state.
+*   `.cursor/rules/` (Created by setup): Contains the active `core_ai_rules.md`.
+*   `TROUBLESHOOTING.md`: Help guide.
 *   `README.md`: This file.
 
-**Version Control (Git):**
+## Version Control (.gitignore Recommendations)
 
-*   **Recommended to Commit:**
+*   **Commit:**
     *   `.cursor/rules/core_ai_rules.md`
-    *   `.cursor/ai_double_system/context/` (All files inside, except maybe large `learnings.log`)
-    *   `.cursor/ai_double_system/indices/` (All JSON files)
-    *   `.cursor/ai_double_system/ai_project_roadmap.md`
-    *   `TROUBLESHOOTING.md`
+    *   `.cursor/double_agent_system/context/` (All files, except potentially large `learnings.log`)
+    *   `.cursor/double_agent_system/indices/` (All JSON files)
+    *   `.cursor/double_agent_system/ai_project_roadmap.md`
+    *   `.cursor/double_agent_system/project_interview.template.md` (To keep the template source)
+    *   `.cursor/double_agent_system/setup_instructions.md` (To track setup process)
     *   `README.md`
-    *   (Optionally: `.cursor/templates/` if tracking base templates)
-*   **Recommended to Ignore (add to your project's `.gitignore`):**
-    *   `.cursor/ai_double_system/ai_task_manager.md`
-    *   `.cursor/ai_double_system/tags.json` (if ctags used)
-    *   `project_interview.md` (Contains project-specific setup info)
-    *   Optionally: `.cursor/ai_double_system/context/learnings.log` (if large)
+    *   `TROUBLESHOOTING.md`
+    *   (Optionally: `.cursor/templates/` if tracking base template changes)
+*   **Ignore (add to project's `.gitignore`):**
+    *   `.cursor/double_agent_system/ai_task_manager.md` (Highly dynamic state file)
+    *   `.cursor/double_agent_system/tags.json` (Generated ctags data)
+    *   `project_interview.md` (Project-specific setup info, potentially sensitive)
+    *   Optionally: `.cursor/double_agent_system/context/learnings.log` (Can get large)
 
-**Disclaimer:**
+## Disclaimer
 
-This system relies on current Cursor AI capabilities. Effectiveness may vary. Use with awareness. See `TROUBLESHOOTING.md`. The Self-Review feature assumes uncommitted changes reflect the agent's last action and does not automatically commit code.
+This system enhances AI capabilities but relies on the current behavior of Cursor's AI. Effectiveness may vary. Use with awareness and supervise the AI's actions, especially file modifications and Git operations. See `TROUBLESHOOTING.md`. The Self-Review feature reviews uncommitted changes; the user is responsible for final validation and committing code.

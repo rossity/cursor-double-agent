@@ -1,0 +1,129 @@
+---
+description: Core rules governing AI operation via state machine, structured context, and optional self-review. Adheres to Double-Agent System structure.
+globs: "**/*"
+alwaysApply: true
+---
+
+- **Core Principle: Adhere to Double-Agent System State Machine**
+    - Always operate based on the current state defined in `@.cursor/double_agent_system/ai_task_manager.md#currentState`.
+    - Transition between states (`IDLE`, `PLANNING`, `PRE-CHECK`, `EXECUTING`, `POST-CHECK`, `SELF_REVIEW`, `UPDATING`) as defined below.
+    - Prioritize reading/writing structured files: `@.cursor/double_agent_system/context/` (YAML, MD), `@.cursor/double_agent_system/indices/` (JSON - **expect valid array `[]` or `[{}, ...]`**), `@.cursor/double_agent_system/ai_project_roadmap.md`, `@.cursor/double_agent_system/ai_task_manager.md` (YAML Frontmatter). Parse/update rigorously. **Do not write comments into JSON files.**
+    - Use terminal commands (`ls`, `grep`, `git diff HEAD`, `ctags` if available) for verification. **Self-review relies on `git diff HEAD` to check uncommitted changes.**
+    - Log significant actions, decisions, errors, and learnings to `@.cursor/double_agent_system/context/learnings.log` with `[Timestamp] - LEVEL - Message`.
+    - Ask for clarification using numbered options if requirements, context, or next steps are ambiguous. Default to `IDLE` state when blocked.
+    - **Git Workflow:** Understand that the *user* is responsible for managing Git branches (creating feature branches before tasks) and commits (committing work after AI completion and user review). Your role is to perform the task *within* the current branch and use `git diff HEAD` for self-review of *your uncommitted changes*. Do not attempt to create branches, commit, or merge.
+
+- **State: IDLE**
+    - **Entry:** Awaiting new user prompt or resuming after user input/confirmation. Task manager may be empty or hold results of last action.
+    - **Action:**
+        - If new user prompt received for a task: Parse the goal. Transition to `PLANNING`.
+        - If resuming after user clarification/confirmation: Parse user input, update task manager/blockers accordingly. Transition to the state indicated by user or logical next step (e.g., `PLANNING`, `PRE-CHECK`, `EXECUTING` to apply fixes, or `UPDATING` if user accepts review as-is).
+    - **Exit:** Transition to `PLANNING` or other state based on input/clarification.
+
+- **State: PLANNING**
+    - **Entry:** Received new task goal or need to determine next step for existing goal.
+    - **Action:**
+        1.  **Initialize/Update Task Manager:**
+            - If new task: Clear/reset `@.cursor/double_agent_system/ai_task_manager.md` (keep file structure). Populate `overallGoal`, `status: Planning`, `currentState: PLANNING`. Add timestamp. Link `roadmapId` if applicable.
+            - If continuing task: Ensure `overallGoal` is set.
+        2.  **Load Context Snippet:**
+            - Read relevant sections from `@.cursor/double_agent_system/context/architecture.md`, `patterns.md`, `requirements.md`.
+            - Query relevant JSON indices (`@.cursor/double_agent_system/indices/*.json`) based on keywords in the goal or affected files. **Parse JSON carefully, expecting an array.**
+            - Check recent relevant entries in `@.cursor/double_agent_system/context/learnings.log`.
+            - Store a concise summary or key points in `ai_task_manager.md#contextSnippet`.
+        3.  **Break Down Task / Determine Next Step:**
+            - Based on `overallGoal`, completed steps, and `contextSnippet`, identify the next logical implementation step.
+            - If task is large, outline first 2-3 steps under `## Human Readable Notes`.
+        4.  **Update Task Manager:** Populate `currentFocus` (Action, Context/Rules, Plan) for the determined step. List `activeFiles` likely involved. Set `currentState: PLANNING`.
+        5.  **Present Plan & Confirm (First Step Only):** If this is the first step of a new task, inform user: "Starting task '[Goal]'. First step: [currentFocus.Action]. I will use context: [brief summary of snippet/rules]. Active files: [activeFiles]. Confirm? (Yes/No/More Info)". Transition to `IDLE` and await confirmation. If not first step, proceed directly.
+    - **Exit:**
+        - If user confirmation needed: Transition to `IDLE`.
+        - If plan ready (and not first step): Update `currentState: PRE-CHECK` in Task Manager. Transition to `PRE-CHECK`.
+
+- **State: PRE-CHECK**
+    - **Entry:** Plan for next step defined in `currentFocus`.
+    - **Action:**
+        1.  **Assess Significance:** Determine if step needs full verification or minor check.
+        2.  **Query Context/Indices:** Check `contextSnippet` and relevant JSON indices (`indices/*.json`) for existing entities mentioned in `currentFocus.Plan`. **Parse JSON array.**
+        3.  **Verify (If Needed):**
+            - If index suggests existing entity at `@path/to/file`: Check existence (`ls`), presence (`grep` or `tags.json`).
+            - If verification fails: Update confidence in JSON index, log failure, add Blocker, set `currentState: IDLE`, transition to `IDLE`.
+            - If verification passes: Optionally update `lastVerified` timestamp in JSON index.
+        4.  **Update Task Manager:** Add findings to `currentFocus.Context/Rules`. Ensure `Plan` reflects reuse if verified entity found. Set `currentState: PRE-CHECK`.
+        5.  **Ask if Unsure:** If context conflicts or plan is unclear, formulate numbered options under `blockers`, set `currentState: IDLE`, transition to `IDLE`.
+    - **Exit:**
+        - If blocked/needs input: Transition to `IDLE`.
+        - If check complete and clear: Update `currentState: EXECUTING` in Task Manager. Transition to `EXECUTING`.
+
+- **State: EXECUTING**
+    - **Entry:** Pre-check complete, plan is clear.
+    - **Action:**
+        1.  Implement the code change/action described in `currentFocus.Plan`, adhering to `currentFocus.Context/Rules`.
+        2.  Modify files listed in `activeFiles` or others as necessary. **These changes should remain uncommitted.**
+        3.  Log significant sub-steps or decisions briefly to `learnings.log` (optional).
+    - **Exit:**
+        - If major error occurs: Report error, add Blocker, set `currentState: IDLE`, transition to `IDLE`.
+        - If execution seems complete: Update `currentState: POST-CHECK` in Task Manager. Transition to `POST-CHECK`.
+
+- **State: POST-CHECK**
+    - **Entry:** Code change/action completed (but not committed).
+    - **Action:**
+        1.  **Review Creation vs Plan:** Analyze generated/modified code against `currentFocus.Plan` and `Context/Rules`.
+        2.  **Basic Self-Correction:** Attempt immediate fixes for minor deviations (syntax errors, imports). Log correction.
+        3.  **Compliance & Test Check:**
+            - Briefly verify against rules in `patterns.md`. Add `// TODO:` comments for minor issues.
+            - **Run Tests (If Applicable):** Check `architecture.md` for `Key Test Command`. If exists and relevant, run it via terminal. Report Pass/Fail. If Fail, add details to `blockers`.
+        4.  **Update Task Manager:** Record outcome. Add test results. Set `currentState: POST-CHECK`.
+    - **Exit:**
+        - If tests failed or major issues need user input: Add Blocker, set `currentState: IDLE`, transition to `IDLE`.
+        - If basic checks pass: Read `selfReviewLevel` from `@.cursor/double_agent_system/context/double.yaml`.
+            - If `Off`: Transition to `UPDATING`.
+            - If `Basic` or `Full`: Update `currentState: SELF_REVIEW` in Task Manager. Transition to `SELF_REVIEW`.
+
+- **State: SELF_REVIEW**
+    - **Entry:** Post-check complete, self-review enabled (`Basic` or `Full`). Changes are uncommitted.
+    - **Action:**
+        1.  **Identify Scope:** Use `activeFiles` or determine changed files from the last `EXECUTING` step.
+        2.  **Run Git Diff:** Execute `git diff HEAD -- path/to/file1 path/to/file2 ...`. This compares the current uncommitted state against the last commit (HEAD). Handle errors (no diff, git error). If no diff/error, log and consider skipping to `UPDATING`.
+        3.  **Gather Review Context:** Get `git diff` output, `overallGoal`, step details (`currentFocus`), context (`contextSnippet`/rules).
+        4.  **Formulate & Execute Review Prompt:** Ask for structured JSON review (`confidenceScore`, `summary`, `issuesFound`, `suggestionsForImprovement`) based on correctness, rules, quality, completeness of the *diff*.
+        5.  **Parse Review Output:** Parse JSON response. Handle errors (log, Blocker, set `currentState: IDLE`, transition `IDLE`).
+        6.  **Update Task Manager:** Add parsed review results under `selfReviewFindings`. Set `currentState: SELF_REVIEW`.
+        7.  **Handle Review Outcome:**
+            - **If `confidenceScore` == 1.0:** Log success. Transition to `UPDATING`.
+            - **If `confidenceScore` < 1.0:**
+                - Read `selfReviewLevel` from `double.yaml`.
+                - **If `Basic`:** Report score/findings to user. Add Blocker asking user how to proceed (e.g., "Accept changes?", "Discard changes?", "Try manual fix?"). Set `currentState: IDLE`. Transition to `IDLE`.
+                - **If `Full`:** Report score/findings. Add Blocker asking user: "Suggest implementing fixes based on review: [summary of suggestions]. Proceed with applying fixes? (Yes/No)". Set `currentState: IDLE`. Transition to `IDLE` (awaiting user response).
+                    - *(User response 'Yes' in IDLE state will typically transition back to PLANNING/EXECUTING to apply fixes to the uncommitted code.)*
+                    - *(User response 'No' in IDLE state acknowledges review; user may instruct further or manually edit/commit/discard.)*
+    - **Exit:** Transition to `UPDATING` (if score 1.0), `IDLE` (if score < 1.0 or error), or back to `PLANNING`/`EXECUTING` via `IDLE` if user confirms applying fixes.
+
+- **State: UPDATING**
+    - **Entry:** Step completed successfully (and passed/handled self-review). Changes are still uncommitted unless user intervened.
+    - **Action:**
+        1.  **Update Indices:** If a new reusable entity was created/modified, **parse relevant JSON index file (expecting array)**, add/update entry, **write updated valid JSON array back.** Log action.
+        2.  **Update Context/Patterns:** If significant learning occurred, add note to `patterns.md` or `learnings.log`.
+        3.  **Update Task Manager:**
+            - Move completed action from `currentFocus` to `completedSteps`.
+            - Clear `currentFocus`, `activeFiles`, `contextSnippet`, `selfReviewFindings`.
+        4.  **Determine Next Step:** Check if `overallGoal` is met.
+            - If goal met: Proceed to Task Completion steps.
+            - If goal not met: Identify next step. Transition back to `PLANNING`.
+        5.  **Task Completion Steps (If Goal Met):**
+            - **Update Roadmap:** If `roadmapId` exists, open `ai_project_roadmap.md`, update task status to `[X]`. Save. Log.
+            - **Clean Task Manager:** Reset `overallGoal`, `status: Idle`, `completedSteps`, `blockers`. Keep YAML structure. Update timestamp.
+            - **Inform User:** Announce task completion. Remind user: "Task '[Goal]' is complete according to plan. Please review the uncommitted changes and commit them if satisfied."
+            - Set `currentState: IDLE`.
+    - **Exit:** Transition to `PLANNING` (for next step) or `IDLE` (if task complete or error).
+
+- **User Commands:**
+    - **`AI: Set self-review level to Off | Basic | Full`**: Update `selfReviewLevel` in `@.cursor/double_agent_system/context/double.yaml`. Acknowledge.
+    - **`AI: Review last changes`**: If in safe state (`IDLE`), transition to `SELF_REVIEW` to review current `git diff HEAD`.
+    - **`AI: Report Double-Agent status`**: Read `@.cursor/double_agent_system/ai_task_manager.md`. Report goal, state, recent steps/blockers. Read and report `selfReviewLevel` from `double.yaml`.
+    - **`AI: Refresh project context`**: Perform scan, compare, propose updates (complex).
+
+- **Error Handling:**
+    - File I/O errors (read/write/parse JSON/YAML): Report, log, add Blocker, transition to `IDLE`. **Verify JSON written is valid array if error occurs during index update.**
+    - Terminal command errors (incl. `git diff`): Report output, log, add Blocker, transition to `IDLE`.
+    - Unexpected state transitions: Log error, attempt recovery to `IDLE`, ask user.

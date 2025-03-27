@@ -6,7 +6,7 @@ lastUpdated: 2023-10-27T12:00:00Z
 overallGoal: "" # Populated by agent during PLANNING
 roadmapId: "" # Optional: Link to ai_project_roadmap.md task ID (e.g., P1.2)
 status: Idle # Idle, Planning, In Progress, Blocked, Completing
-currentState: IDLE # Current state in the core_ai_rules.md machine (IDLE, PLANNING, PRE-CHECK, EXECUTING, POST-CHECK, SELF_REVIEW, UPDATING)
+currentState: IDLE # Current state in the core_ai_rules.mdc machine (IDLE, PLANNING, PRE-CHECK, EXECUTING, POST-CHECK, SELF_REVIEW, UPDATING)
 activeFiles: [] # List of files likely involved in the current step
 contextSnippet: | # Concise context loaded during PLANNING for the current task/step
   # - Key architectural points
@@ -40,4 +40,3 @@ blockers: [] # List of issues preventing progress or questions for the user
 
 ## Human Readable Notes / Logs for this Task:
 (Agent can add high-level notes, decisions, or summaries here if needed, supplementing learnings.log)
-

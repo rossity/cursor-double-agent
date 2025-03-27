@@ -1,6 +1,6 @@
 # Project Interview
 
-**Instructions:** Please answer the following questions about your project. This information provides essential high-level context that cannot be determined automatically from the code. Be as clear and concise as possible. **Create a file named `project_interview.md` in your project root and paste your answers there BEFORE running the AI setup script.**
+**Instructions:** Please answer the following questions about your project. This information provides essential high-level context that cannot be determined automatically from the code. Be as clear and concise as possible.
 
 ---
 
